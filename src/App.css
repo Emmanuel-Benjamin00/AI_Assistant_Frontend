@@ -1,0 +1,193 @@
+.app {
+  padding: 1.5rem 1.25rem 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+
+.tagline {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--text);
+  opacity: 0.95;
+}
+
+.grid {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+.card {
+  background: var(--surface, var(--bg));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem 1.25rem 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.hint {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.hint code {
+  font-size: 0.82rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field span {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.field.inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.field.inline input {
+  width: 5rem;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+  color: var(--text-h);
+}
+
+input,
+textarea {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg, var(--bg));
+}
+
+textarea {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+button {
+  align-self: flex-start;
+  padding: 0.55rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.feedback {
+  margin: 1rem 0 0;
+  font-size: 0.9rem;
+}
+
+.feedback.success {
+  color: var(--ok, #0d7a4f);
+}
+
+.feedback.error {
+  color: var(--err, #b42318);
+}
+
+.answer-block {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.answer-block h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text-h);
+}
+
+.answer-body {
+  white-space: pre-wrap;
+  line-height: 1.5;
+  color: var(--text-h);
+}
+
+.sources {
+  margin-top: 1rem;
+}
+
+.sources summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+.sources ol {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.sources li {
+  margin-bottom: 1rem;
+}
+
+.chunk-id {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.sources pre {
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  background: var(--code-bg);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

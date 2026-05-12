@@ -1,0 +1,60 @@
+:root {
+  --text: #5c5668;
+  --text-h: #0f0d14;
+  --bg: #f8f7fa;
+  --surface: #fff;
+  --input-bg: #fff;
+  --border: #e2e0e6;
+  --code-bg: #eeecf3;
+  --accent: #5b21b6;
+  --shadow:
+    rgba(15, 13, 20, 0.06) 0 4px 24px -4px,
+    rgba(15, 13, 20, 0.04) 0 2px 8px -2px;
+  --ok: #0d7a4f;
+  --err: #b42318;
+
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #b4afc0;
+    --text-h: #f4f2f8;
+    --bg: #121118;
+    --surface: #1a1822;
+    --input-bg: #1a1822;
+    --border: #2f2c3a;
+    --code-bg: #23202e;
+    --accent: #a78bfa;
+    --shadow:
+      rgba(0, 0, 0, 0.35) 0 4px 24px -4px,
+      rgba(0, 0, 0, 0.2) 0 2px 8px -2px;
+    --ok: #34d399;
+    --err: #f87171;
+  }
+}
+
+#root {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.88em;
+  padding: 0.12em 0.35em;
+  background: var(--code-bg);
+  border-radius: 4px;
+}
