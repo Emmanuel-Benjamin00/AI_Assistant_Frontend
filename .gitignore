@@ -1,3 +1,10 @@
+# --- Secrets: never commit local env files ------------------------------
+# .env.example and .env.production hold non-secret build config and ARE committed.
+# Anything with a real value belongs in .env.local (ignored below).
+.env
+.env.local
+.env.*.local
+
 # Logs
 logs
 *.log
