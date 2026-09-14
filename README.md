@@ -1,6 +1,6 @@
 # AI Assistant — Frontend
 
-React single-page UI for the **AI Assistant** RAG service. Two panels: paste text to add it to the knowledge index, then ask questions and get answers grounded in what you ingested, with the source chunks shown alongside.
+React single-page UI for the **AI Assistant** RAG service. Ask questions and get answers grounded in the indexed documents, with the source chunks shown alongside; see what is indexed; and paste text to add new documents.
 
 The Django API it talks to lives in a separate repo: **[AI_Assistant_Backend](https://github.com/Emmanuel-Benjamin00/AI_Assistant_Backend)**.
 
@@ -28,10 +28,15 @@ The Django API it talks to lives in a separate repo: **[AI_Assistant_Backend](ht
 
 | Panel | Calls | What happens |
 |---|---|---|
-| **Ingest document** | `POST /api/documents/` | Send a title and body text. The backend splits it on blank lines, embeds each chunk, and stores it. You get back how many chunks were created. |
-| **Ask** | `POST /api/ask/` | Send a question and a *Top K*. The backend retrieves the K nearest chunks and has an LLM answer from them. You see the answer plus the source chunks it used. |
+| **Ask · RAG streaming** | `POST /api/ask/stream/` | Send a question with *Search* (hybrid or vector), *Top K* and optional *Re-rank with LLM*. The answer appears token by token as it is generated. Each source shows its document, page, similarity and where the vector and keyword searches ranked it. |
+| **Ask · Agent** | `POST /api/agent/` | The model calls tools (search, list documents, read a document) before answering. The tool calls it made are listed under the answer. Try the summary and comparison samples. |
+| **Ask · LangChain** | `POST /api/ask/langchain/` | The same RAG flow built with LangChain, returned in one response, for comparison. |
+| **Indexed documents** | `GET /api/documents/` | Lists what the assistant can answer from, with each document's type and chunk count. |
+| **Add a document** | `POST /api/documents/upload/` or `POST /api/documents/` | *Upload file* (PDF, DOCX, TXT, Markdown, up to 10 MB) or *Paste text*. On a deployment with ingest locked, enter the access key (the backend's `INGEST_API_KEY`). |
 
-Both panels show loading states and surface API errors inline.
+All panels show loading states and surface API errors inline. Requests time out after 90 seconds without data (a streaming answer resets the timer on every token), and a notice appears after 5 seconds in case the backend is waking up.
+
+Streaming uses `fetch` and reads the response body, not `EventSource`, because `EventSource` can only send GET requests. [`parseSseChunk`](src/api.js) handles an event split across two network chunks.
 
 ---
 
@@ -104,7 +109,7 @@ Open <http://localhost:5173/>.
 
 ## Verify it works
 
-1. In the **Ingest document** panel, enter a title such as `Company facts` and this text — the blank line matters, it separates chunks:
+1. In the **Add a document** panel, choose **Paste text**, enter a title such as `Company facts` and this text:
 
    ```
    Our support hours are 9am to 5pm on weekdays.
@@ -112,11 +117,13 @@ Open <http://localhost:5173/>.
    We offer a 30-day refund on all plans.
    ```
 
-2. Click **Ingest**. You should see `Ingested document #1 (2 chunks).`
+2. Click **Ingest**. You should see `Indexed document #1 (1 chunks, text).`
 
 3. In the **Ask** panel, ask `When can I get support?` and click Ask.
 
-4. You should get an answer about 9am–5pm weekdays, with the matching source chunk listed below it.
+4. You should see the answer appear word by word, about 9am–5pm weekdays, with the matching source chunk listed below it.
+
+5. Optional: switch to **Upload file** and upload a PDF, then ask about it. The sources show the page number.
 
 If all four steps work, the full stack — React, Django, pgvector, and OpenAI — is wired up correctly.
 
@@ -186,13 +193,18 @@ VITE_API_BASE=http://127.0.0.1:8000
 ```
 AI_Assistant_Frontend/
 ├── src/
-│   ├── App.jsx          # both panels, form state, error handling
-│   ├── api.js           # ingestDocument() and askQuestion() — all API calls
+│   ├── App.jsx          # layout and the document list
+│   ├── components/
+│   │   ├── AskPanel.jsx     # engine picker (RAG streaming / agent / LangChain), search options, answer
+│   │   ├── IngestPanel.jsx  # file upload and paste-text forms
+│   │   └── Sources.jsx      # retrieved chunks with page, similarity and search ranks
+│   ├── useSlowFlag.js   # "still working" notice after 5 seconds
+│   ├── api.js           # every API call, including the streaming reader and SSE parser
 │   ├── App.css          # component styles
 │   ├── index.css        # global styles
 │   ├── main.jsx         # React entry point
 │   └── assets/
-├── public/              # static files served as-is
+├── public/              # static files served as-is (incl. staticwebapp.config.json)
 ├── index.html           # HTML shell Vite builds from
 ├── vite.config.js       # React plugin + the /api dev proxy
 ├── eslint.config.js
@@ -207,7 +219,7 @@ AI_Assistant_Frontend/
 - **No credentials in this repo.** The OpenAI key lives only in the backend's `.env`; this app calls your own API, never OpenAI.
 - **`.env`, `.env.local` and `.env.*.local` are gitignored.** Put anything machine-specific there.
 - **Everything in a `VITE_` variable is public** once built — treat the whole bundle as readable by users.
-- **The backend has no authentication yet.** Do not deploy this pair publicly until it does, or anyone can spend your OpenAI credits.
+- **The ingest access key is typed by the user, never built in.** It is sent only as the `X-Ingest-Key` header and is not stored.
 
 ---
 
@@ -219,11 +231,14 @@ The backend is not running. Start it (`python manage.py runserver`) and confirm 
 **`Request failed (503)`**
 The backend has no `OPENAI_API_KEY`. Add it to the backend's `.env` and restart `runserver`.
 
-**`Request failed (400)`**
-A field failed validation — usually an empty title or text, or a *Top K* outside 1–20.
+**A field error such as `text: ...`**
+A field failed validation — usually an empty title or text, text over 100,000 characters, or a *Top K* outside 1–10.
+
+**Deploying to Azure**
+See [DEPLOY_AZURE.md](https://github.com/Emmanuel-Benjamin00/AI_Assistant_Backend/blob/dev/DEPLOY_AZURE.md) in the backend repo; this app deploys to Azure Static Web Apps.
 
 **The answer says there is no indexed content**
-Nothing has been ingested into that database yet. Use the Ingest panel first.
+Nothing has been ingested into that database yet. Use the **Add a document** panel first.
 
 **Vite starts on a different port**
 Port 5173 was busy. Vite prints the port it chose — use that URL. Nothing else needs changing, since the proxy is configured on the server side.

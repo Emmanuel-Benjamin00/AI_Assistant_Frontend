@@ -191,3 +191,165 @@ button:disabled {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+.section-gap {
+  margin-top: 1.75rem;
+}
+
+.samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+button.chip {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-h);
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.feedback.notice {
+  opacity: 0.85;
+}
+
+.doc-list {
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.doc-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-h);
+}
+
+.doc-meta {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+/* Segmented control: answer engine and document input tabs */
+.segmented {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin: 0.5rem 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--code-bg);
+}
+
+.segmented button {
+  padding: 0.35rem 0.8rem;
+  background: transparent;
+  color: var(--text-h);
+  font-weight: 500;
+  font-size: 0.88rem;
+}
+
+.segmented button.active {
+  background: var(--surface, var(--bg));
+  color: var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+select {
+  font: inherit;
+  color: var(--text-h);
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg, var(--bg));
+}
+
+.field.checkbox {
+  gap: 0.45rem;
+}
+
+.field.checkbox input {
+  width: auto;
+}
+
+input[type='file'] {
+  padding: 0.45rem;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0.35rem;
+}
+
+.badge {
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  color: var(--text-h);
+}
+
+.badge.strong {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.steps li {
+  margin-bottom: 0.5rem;
+}
+
+.steps code {
+  display: block;
+  word-break: break-word;
+}
+
+.step-summary {
+  display: block;
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.read-docs {
+  margin: 0.75rem 0 0;
+}
+
+/* Blinking caret while the answer streams in */
+.cursor {
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: blink 1s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor {
+    animation: none;
+  }
+}
