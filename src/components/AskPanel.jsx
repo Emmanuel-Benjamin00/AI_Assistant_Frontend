@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { askAgent, askQuestionStream, askWithLangChain } from '../api'
+import { askAgent, askQuestionStream, askWithLangChain, ServerUnavailableError } from '../api'
 import { useSlowFlag } from '../useSlowFlag'
 import { Sources } from './Sources'
 
@@ -59,7 +59,7 @@ function AgentSteps({ steps }) {
   )
 }
 
-export function AskPanel() {
+export function AskPanel({ serverReady, wakeServer }) {
   const [engine, setEngine] = useState('rag')
   const [question, setQuestion] = useState('')
   const [topK, setTopK] = useState(5)
@@ -76,7 +76,30 @@ export function AskPanel() {
 
   // Only "slow" until the first token arrives; after that the user can see progress.
   const slow = useSlowFlag(loading && !streaming)
+  const waking = useSlowFlag(!serverReady)
   const current = ENGINES.find((e) => e.id === engine)
+
+  async function runAsk(q, options) {
+    if (engine === 'rag') {
+      await askQuestionStream(q, options, {
+        onSources: setSources,
+        onToken: (text) => {
+          setStreaming(true)
+          setAnswer((prev) => (prev ?? '') + text)
+        },
+      })
+    } else if (engine === 'agent') {
+      const r = await askAgent(q)
+      setAnswer(r.answer)
+      setSources(r.sources ?? [])
+      setSteps(r.steps ?? [])
+      setDocumentsRead(r.documents_read ?? [])
+    } else {
+      const r = await askWithLangChain(q, options)
+      setAnswer(r.answer)
+      setSources(r.sources ?? [])
+    }
+  }
 
   async function handleAsk(e) {
     e.preventDefault()
@@ -89,25 +112,11 @@ export function AskPanel() {
     const q = question.trim()
     const options = { topK, mode, rerank }
     try {
-      if (engine === 'rag') {
-        await askQuestionStream(q, options, {
-          onSources: setSources,
-          onToken: (text) => {
-            setStreaming(true)
-            setAnswer((prev) => (prev ?? '') + text)
-          },
-        })
-      } else if (engine === 'agent') {
-        const r = await askAgent(q)
-        setAnswer(r.answer)
-        setSources(r.sources ?? [])
-        setSteps(r.steps ?? [])
-        setDocumentsRead(r.documents_read ?? [])
-      } else {
-        const r = await askWithLangChain(q, options)
-        setAnswer(r.answer)
-        setSources(r.sources ?? [])
-      }
+      await runAsk(q, options).catch(async (err) => {
+        // The server fell asleep, so the question never ran: wait for it to wake, then ask again.
+        if (!(err instanceof ServerUnavailableError) || !(await wakeServer())) throw err
+        return runAsk(q, options)
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Request failed')
     } finally {
@@ -191,14 +200,20 @@ export function AskPanel() {
           </div>
         )}
 
-        <button type="submit" disabled={loading}>
-          {loading ? (streaming ? 'Answering…' : 'Thinking…') : 'Ask'}
+        <button type="submit" disabled={loading || !serverReady}>
+          {loading ? (streaming ? 'Answering…' : 'Thinking…') : waking ? 'Waking up server…' : 'Ask'}
         </button>
       </form>
 
+      {waking && !loading && (
+        <p className="feedback notice" role="status">
+          Waking up the server. After a quiet period this can take a minute or two. You can type
+          your question in the meantime.
+        </p>
+      )}
       {slow && (
         <p className="feedback notice" role="status">
-          Still working. If the server was idle it can take up to a minute to wake up.
+          Still working. If the server was idle it can take a minute or two to wake up.
         </p>
       )}
       {error && (

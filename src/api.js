@@ -4,6 +4,15 @@ const API_BASE = import.meta.env.VITE_API_BASE ?? ''
 // Generous, so a cold-starting backend can still answer.
 const REQUEST_TIMEOUT_MS = 90_000
 
+// A sleeping backend on a free hosting plan can take a few minutes to start.
+const WAKE_MAX_WAIT_MS = 240_000
+const WAKE_RETRY_DELAY_MS = 3_000
+// Statuses the hosting platform returns (as HTML, not our JSON) while the app is starting.
+const STARTING_STATUSES = new Set([502, 503, 504])
+
+/** The server gave no answer at all (unreachable, timed out or still starting), so nothing ran. */
+export class ServerUnavailableError extends Error {}
+
 function formatError(body, status) {
   if (status === 429) return 'Too many requests. Please wait a few minutes and try again.'
   if (body && typeof body === 'object') {
@@ -29,13 +38,38 @@ async function parseJson(res) {
   }
 }
 
-function networkError(err) {
+function networkError(err, ErrorType = Error) {
   if (err.name === 'AbortError') {
-    return new Error('The server took too long to respond. Please try again.', { cause: err })
+    return new ErrorType('The server took too long to respond. Please try again.', { cause: err })
   }
-  return new Error('Could not reach the server. Check your connection and try again.', {
+  return new ErrorType('Could not reach the server. Check your connection and try again.', {
     cause: err,
   })
+}
+
+/** Our API always answers in JSON; an HTML 502/503/504 comes from the platform while starting. */
+function isStarting(res) {
+  const type = res.headers.get('content-type') ?? ''
+  return STARTING_STATUSES.has(res.status) && !type.includes('application/json')
+}
+
+const startingError = () =>
+  new ServerUnavailableError('The server is still starting. Please try again in a moment.')
+
+/**
+ * Call `fn`, retrying while the server is unavailable (e.g. waking from idle), for up to a few
+ * minutes. Only ServerUnavailableError is retried: it means the request never ran.
+ */
+export async function retryWhileStarting(fn) {
+  const deadline = Date.now() + WAKE_MAX_WAIT_MS
+  for (;;) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (!(err instanceof ServerUnavailableError) || Date.now() >= deadline) throw err
+      await new Promise((resolve) => setTimeout(resolve, WAKE_RETRY_DELAY_MS))
+    }
+  }
 }
 
 /** JSON bodies are encoded here; FormData (file uploads) is sent as multipart by the browser. */
@@ -56,10 +90,11 @@ async function request(path, options = {}) {
   try {
     res = await send(path, { ...options, signal: controller.signal })
   } catch (err) {
-    throw networkError(err)
+    throw networkError(err, ServerUnavailableError)
   } finally {
     clearTimeout(timer)
   }
+  if (isStarting(res)) throw startingError()
   const data = await parseJson(res)
   if (!res.ok) throw new Error(formatError(data, res.status))
   return data
@@ -149,8 +184,9 @@ export async function askQuestionStream(question, { topK, mode, rerank }, { onSo
         signal: controller.signal,
       })
     } catch (err) {
-      throw networkError(err)
+      throw networkError(err, ServerUnavailableError)
     }
+    if (isStarting(res)) throw startingError()
     // Errors before streaming starts (validation, rate limit, provider down) are plain JSON.
     if (!res.ok) throw new Error(formatError(await parseJson(res), res.status))
 

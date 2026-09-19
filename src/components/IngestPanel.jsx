@@ -1,12 +1,12 @@
 import { useState } from 'react'
-import { ingestDocument, uploadDocument } from '../api'
+import { ingestDocument, ServerUnavailableError, uploadDocument } from '../api'
 import { useSlowFlag } from '../useSlowFlag'
 
 const MAX_DOCUMENT_CHARS = 100_000
 const MAX_UPLOAD_MB = 10
 const ACCEPTED_FILES = '.pdf,.docx,.txt,.md,.markdown'
 
-export function IngestPanel({ onIngested }) {
+export function IngestPanel({ onIngested, serverReady, wakeServer }) {
   const [tab, setTab] = useState('upload')
   const [title, setTitle] = useState('')
   const [docText, setDocText] = useState('')
@@ -41,7 +41,13 @@ export function IngestPanel({ onIngested }) {
       setFileInputKey((k) => k + 1)
       onIngested()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ingest failed')
+      if (err instanceof ServerUnavailableError) {
+        // Not retried automatically: a slow upload may still have been indexed.
+        wakeServer()
+        setError(`${err.message} Check the document list once it reloads before trying again.`)
+      } else {
+        setError(err instanceof Error ? err.message : 'Ingest failed')
+      }
     } finally {
       setLoading(false)
     }
@@ -129,7 +135,7 @@ export function IngestPanel({ onIngested }) {
             disabled={loading}
           />
         </label>
-        <button type="submit" disabled={loading}>
+        <button type="submit" disabled={loading || !serverReady}>
           {loading ? 'Indexing…' : tab === 'upload' ? 'Upload' : 'Ingest'}
         </button>
       </form>
