@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { askAgent, askQuestionStream, askWithLangChain, ServerUnavailableError } from '../api'
+import { COLD_START_NOTE } from '../messages'
 import { useSlowFlag } from '../useSlowFlag'
 import { Sources } from './Sources'
 
@@ -207,13 +208,13 @@ export function AskPanel({ serverReady, wakeServer }) {
 
       {waking && !loading && (
         <p className="feedback notice" role="status">
-          Waking up the server. After a quiet period this can take a minute or two. You can type
-          your question in the meantime.
+          Waking up the server, hang on. {COLD_START_NOTE} You can type your question in the
+          meantime.
         </p>
       )}
       {slow && (
         <p className="feedback notice" role="status">
-          Still working. If the server was idle it can take a minute or two to wake up.
+          Still working, hang on. {COLD_START_NOTE}
         </p>
       )}
       {error && (

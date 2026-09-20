@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { listDocuments, retryWhileStarting, ServerUnavailableError } from './api'
 import { AskPanel } from './components/AskPanel'
 import { IngestPanel } from './components/IngestPanel'
+import { COLD_START_NOTE } from './messages'
 import { useSlowFlag } from './useSlowFlag'
 import './App.css'
 
@@ -82,7 +83,7 @@ function App() {
               {serverReady
                 ? 'No documents yet.'
                 : waking
-                  ? 'Waking up the server. After a quiet period this can take a minute or two.'
+                  ? `Waking up the server, hang on. ${COLD_START_NOTE}`
                   : 'Loading documents…'}
             </p>
           )}

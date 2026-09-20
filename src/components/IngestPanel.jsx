@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { ingestDocument, ServerUnavailableError, uploadDocument } from '../api'
+import { COLD_START_NOTE } from '../messages'
 import { useSlowFlag } from '../useSlowFlag'
 
 const MAX_DOCUMENT_CHARS = 100_000
@@ -126,7 +127,7 @@ export function IngestPanel({ onIngested, serverReady, wakeServer }) {
         )}
 
         <label className="field">
-          <span>Access key (only if the server requires one)</span>
+          <span>Access key (required to add documents)</span>
           <input
             type="password"
             value={ingestKey}
@@ -142,7 +143,7 @@ export function IngestPanel({ onIngested, serverReady, wakeServer }) {
 
       {slow && (
         <p className="feedback notice" role="status">
-          Still working. Large documents and a waking server can take a while.
+          Still working, hang on. Large documents take a while. {COLD_START_NOTE}
         </p>
       )}
       {message && (
